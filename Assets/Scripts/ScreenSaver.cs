@@ -180,7 +180,7 @@ public class ScreenSaver : BasicGUIController {
             return;
         }
 
-        bool success = IsFileWithExtension(filePath, ".txt");
+        bool success = IsFileWithExtension(filePath, ".mat");
         int numFrames = 0;
 
         if (success) {

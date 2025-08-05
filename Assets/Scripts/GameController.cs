@@ -24,7 +24,11 @@ public class GameController : MonoBehaviour {
     private string DayPattern = "[0-9]{8}";
 
     private string eyelinkMatFile = $"{Path.DirectorySeparatorChar}eyelink.mat";
+    
+    // Modified to support both .mat and .txt session files
     private string unityfileMatFile = $"{Path.DirectorySeparatorChar}unityfile.mat";
+  
+    
     private string resultFile = $"{Path.DirectorySeparatorChar}unityfile_eyelink.csv";
 
     private static GameController _instance;
@@ -62,8 +66,6 @@ public class GameController : MonoBehaviour {
             counter = pressDelay;
         }
     }
-
-
 
     private void Start() {
         //Online sources says that if vSyncCount != 0, targetFrameRate will be ignored.
@@ -162,17 +164,17 @@ public class GameController : MonoBehaviour {
     private void PwdMode(BatchModeLogger logger, Queue<DirectoryInfo> dirQ) {
         DirectoryInfo pwd = new DirectoryInfo(PresentWorkingDirectory);
         Debug.LogError($"PWD Directory: {pwd.FullName}");
-    Debug.LogError($"PWD exists: {pwd.Exists}");
-    Debug.LogError($"PWD name: '{pwd.Name}' | IsDay: {IsDayDir(pwd)} | IsSession: {IsSessionDir(pwd)}");
+        Debug.LogError($"PWD exists: {pwd.Exists}");
+        Debug.LogError($"PWD name: '{pwd.Name}' | IsDay: {IsDayDir(pwd)} | IsSession: {IsSessionDir(pwd)}");
 
-    // List all subdirectories
-    if (pwd.Exists) {
-        DirectoryInfo[] subDirs = pwd.GetDirectories();
-        Debug.LogError($"Found {subDirs.Length} subdirectories in PWD:");
-        foreach (DirectoryInfo subDir in subDirs) {
-            Debug.LogError($"  '{subDir.Name}' | IsDay: {IsDayDir(subDir)} | IsSession: {IsSessionDir(subDir)}");
+        // List all subdirectories
+        if (pwd.Exists) {
+            DirectoryInfo[] subDirs = pwd.GetDirectories();
+            Debug.LogError($"Found {subDirs.Length} subdirectories in PWD:");
+            foreach (DirectoryInfo subDir in subDirs) {
+                Debug.LogError($"  '{subDir.Name}' | IsDay: {IsDayDir(subDir)} | IsSession: {IsSessionDir(subDir)}");
+            }
         }
-    }
         dirQ.Enqueue(pwd);
     }
 
@@ -201,7 +203,6 @@ public class GameController : MonoBehaviour {
                 Debug.LogError("IsSessionDir!");
                 sessionQ.Enqueue(dir.FullName);
             }
-            //Debug.LogError($"Final session queue count: {sessionQ.count}");
         }
         Debug.LogError($"Regex patterns - Day: '{DayPattern}' | Session: '{SessionPattern}'");
         
@@ -221,6 +222,31 @@ public class GameController : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Determines the appropriate session file path based on what's available in the directory.
+    /// Prioritizes .txt files over .mat files to match GUI behavior.
+    /// </summary>
+    /// <param name="sessionDir">Directory path containing session files</param>
+    /// <returns>Full path to the session file, or null if none found</returns>
+    private string GetSessionFilePath(string sessionDir) {
+    // Look for any session*.txt file
+    string[] txtFiles = Directory.GetFiles(sessionDir, "session*.txt");
+    
+    if (txtFiles.Length > 0) {
+        Debug.LogError($"Found .txt session file: {txtFiles[0]}");
+        return txtFiles[0];
+    }
+    
+    string matPath = sessionDir + unityfileMatFile;
+    if (File.Exists(matPath)) {
+        Debug.LogError($"Found .mat session file: {matPath}");
+        return matPath;
+    }
+    
+    Debug.LogError($"No session file found in {sessionDir}");
+    return null;
+}
+
     private async void ProcessSession(Queue<string> sessions, BatchModeLogger logger, BinMapper mapper) {
         string path;
         int total = sessions.Count;
@@ -230,11 +256,22 @@ public class GameController : MonoBehaviour {
             path = sessions.Dequeue();
             logger.Print($"Starting({count}/{total}): {path}");
             Debug.LogError($"Starting({count}/{total}): {path}");
-            logger.Print($"Path:{path}");
-            logger.Print($"unityfileMatFile:{unityfileMatFile}");
-            logger.Print($"eyelinkMatFile:{eyelinkMatFile}");
+            
+            // Use the new method to determine session file path
+            string sessionFilePath = GetSessionFilePath(path);
+            if (sessionFilePath == null) {
+                logger.Print($"Failed: No valid session file found in {path}");
+                count++;
+                continue;
+            }
+            
+            string eyelinkFilePath = path + eyelinkMatFile;
+            
+            logger.Print($"Path: {path}");
+            logger.Print($"Session file: {sessionFilePath}");
+            logger.Print($"Eyelink file: {eyelinkFilePath}");
 
-            StartCoroutine(ProcessWrapper(path + unityfileMatFile, path + eyelinkMatFile, path, mapper));
+            StartCoroutine(ProcessWrapper(sessionFilePath, eyelinkFilePath, path, mapper));
             while (!generationComplete) {
                 await Task.Delay(10000); //10 second notify-alive message
 
@@ -248,7 +285,7 @@ public class GameController : MonoBehaviour {
                 logger.Print($"Success: {path + resultFile}");
             }
             else {
-                logger.Print($"File. Exists(path: {path} + resultFile: {resultFile}): {File.Exists(path + resultFile)}");
+                logger.Print($"File.Exists(path: {path} + resultFile: {resultFile}): {File.Exists(path + resultFile)}");
                 logger.Print($"Failed: {path + resultFile}. Add to the command \"-logfile <log file location>.txt\" to debug");
             }
             count++;
