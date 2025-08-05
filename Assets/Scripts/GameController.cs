@@ -20,7 +20,7 @@ public class GameController : MonoBehaviour {
 
     private bool generationComplete = false;
 
-    private string SessionPattern = "session[0-9]{2}";
+    private string SessionPattern = "[Ss]ession[0-9]{2}";
     private string DayPattern = "[0-9]{8}";
 
     private string eyelinkMatFile = $"{Path.DirectorySeparatorChar}eyelink.mat";
@@ -84,51 +84,66 @@ public class GameController : MonoBehaviour {
             int density = BinWallManager.Default_Density;
             string sessionListPath = null;
 
-            for (int i = 0; i < args.Length; i++) {
+            for (int i = 0; i < args.Length; i++)
+            {
                 Debug.LogError($"ARG {i}: {args[i]}");
-                switch (args[i].ToLower()) {
+                switch (args[i].ToLower())
+                {
                     case "-sessionlist":
                         isSessionList = true;
-                        logger.Print($"Session List detected!");
+                        Debug.LogError($"Session List detected!");
                         Debug.LogError($"{args[i + 1]}");
                         sessionListPath = args[i + 1];
                         break;
 
                     case "-numOfLengthBins":
-                        if (int.TryParse(args[i + 1], out numofLengthBins)) {
-                            logger.Print($"Setting number of length bins to : {numofLengthBins}");
+                        if (int.TryParse(args[i + 1], out numofLengthBins))
+                        {
+                            Debug.LogError($"Setting number of length bins to : {numofLengthBins}");
                         }
-                        else {
-                            logger.Print($"Unable to parse {args[i + 1]} to integer, using  {numofLengthBins} as default");
+                        else
+                        {
+                            Debug.LogError($"Unable to parse {args[i + 1]} to integer, using  {numofLengthBins} as default");
                         }
                         break;
                     case "-density":
-                        if (int.TryParse(args[i + 1], out density)) {
-                            logger.Print($"Setting density to : {density}");
+                        if (int.TryParse(args[i + 1], out density))
+                        {
+                            Debug.LogError($"Setting density to : {density}");
                         }
-                        else {
-                            logger.Print($"Unable to parse {args[i + 1]} to integer, using  {density} as default");
+                        else
+                        {
+                            Debug.LogError($"Unable to parse {args[i + 1]} to integer, using  {density} as default");
                         }
                         break;
                     case "-radius":
-                        if (int.TryParse(args[i + 1], out radius)) {
-                            logger.Print($"Setting radius to : {radius}");
+                        if (int.TryParse(args[i + 1], out radius))
+                        {
+                            Debug.LogError($"Setting radius to : {radius}");
                         }
-                        else {
-                            logger.Print($"Unable to parse {args[i + 1]} to integer, using  {radius} as default");
+                        else
+                        {
+                            Debug.LogError($"Unable to parse {args[i + 1]} to integer, using  {radius} as default");
                         }
                         break;
                 }
+       
             }
 
             Queue<DirectoryInfo> dirQ = new Queue<DirectoryInfo>();
 
-            if (!isSessionList) {
+            if (!isSessionList)
+            {
                 PwdMode(logger, dirQ);
+                Debug.Log("isSessionList: False");
             }
-            else {
+            else
+            {
                 SessionListMode(logger, sessionListPath, dirQ);
             }
+            Debug.LogError($"Present Working Directory: {PresentWorkingDirectory}");
+            Debug.LogError($"Running in {(isSessionList ? "Session List" : "PWD")} Mode");
+            Debug.LogError($"Directory queue count after population: {dirQ.Count}"); 
             BinWallManager.ReconfigureGazeOffsetCache(radius, density);
             ProcessExperimentQueue(dirQ, logger, numofLengthBins);
         }
@@ -146,37 +161,61 @@ public class GameController : MonoBehaviour {
 
     private void PwdMode(BatchModeLogger logger, Queue<DirectoryInfo> dirQ) {
         DirectoryInfo pwd = new DirectoryInfo(PresentWorkingDirectory);
+        Debug.LogError($"PWD Directory: {pwd.FullName}");
+    Debug.LogError($"PWD exists: {pwd.Exists}");
+    Debug.LogError($"PWD name: '{pwd.Name}' | IsDay: {IsDayDir(pwd)} | IsSession: {IsSessionDir(pwd)}");
+
+    // List all subdirectories
+    if (pwd.Exists) {
+        DirectoryInfo[] subDirs = pwd.GetDirectories();
+        Debug.LogError($"Found {subDirs.Length} subdirectories in PWD:");
+        foreach (DirectoryInfo subDir in subDirs) {
+            Debug.LogError($"  '{subDir.Name}' | IsDay: {IsDayDir(subDir)} | IsSession: {IsSessionDir(subDir)}");
+        }
+    }
         dirQ.Enqueue(pwd);
     }
 
     private void ProcessExperimentQueue(Queue<DirectoryInfo> dirQ, BatchModeLogger logger, int numOfBinsForFloorLength) {
         Queue<string> sessionQ = new Queue<string>();
 
-        while (dirQ.Count > 0) {
+        while (dirQ.Count > 0)
+        {
             DirectoryInfo dir = dirQ.Dequeue();
-            if (IsDayDir(dir)) {
+            Debug.LogError($"Processing: '{dir.Name}' | Exists: {dir.Exists} | IsDay: {IsDayDir(dir)} | IsSession: {IsSessionDir(dir)}");
+            if (IsDayDir(dir))
+            {
                 IEnumerable<string> subDirs = Directory.EnumerateDirectories(dir.FullName, "*", SearchOption.TopDirectoryOnly);
-                foreach (string subDir in subDirs) {
-                    if (IsSessionDir(new DirectoryInfo(subDir))) {
+                foreach (string subDir in subDirs)
+                {
+                    if (IsSessionDir(new DirectoryInfo(subDir)))
+                    {
                         logger.Print($"Queuing {subDir}");
                         sessionQ.Enqueue(subDir);
                     }
                 }
             }
-            else if (IsSessionDir(dir)) {
+            else if (IsSessionDir(dir))
+            {
                 logger.Print($"Queuing {dir}");
+                Debug.LogError("IsSessionDir!");
                 sessionQ.Enqueue(dir.FullName);
             }
+            //Debug.LogError($"Final session queue count: {sessionQ.count}");
         }
+        Debug.LogError($"Regex patterns - Day: '{DayPattern}' | Session: '{SessionPattern}'");
+        
 
         BinMapper mapper = new DoubleTeeBinMapper(numOfBinsForFloorLength);
 
         if (sessionQ.Count > 0) {
             logger.Print($"{sessionQ.Count} sessions to be processed");
+            Debug.LogError($"{sessionQ.Count} sessions to be processed");
             ProcessSession(sessionQ, logger, mapper);
         }
         else {
             logger.Print("No Session directories found! Exiting");
+            Debug.LogError($"No Session directories found! Exiting");
             logger.Dispose();
             Application.Quit();
         }
@@ -190,6 +229,10 @@ public class GameController : MonoBehaviour {
         while (sessions.Count > 0) {
             path = sessions.Dequeue();
             logger.Print($"Starting({count}/{total}): {path}");
+            Debug.LogError($"Starting({count}/{total}): {path}");
+            logger.Print($"Path:{path}");
+            logger.Print($"unityfileMatFile:{unityfileMatFile}");
+            logger.Print($"eyelinkMatFile:{eyelinkMatFile}");
 
             StartCoroutine(ProcessWrapper(path + unityfileMatFile, path + eyelinkMatFile, path, mapper));
             while (!generationComplete) {
@@ -205,6 +248,7 @@ public class GameController : MonoBehaviour {
                 logger.Print($"Success: {path + resultFile}");
             }
             else {
+                logger.Print($"File. Exists(path: {path} + resultFile: {resultFile}): {File.Exists(path + resultFile)}");
                 logger.Print($"Failed: {path + resultFile}. Add to the command \"-logfile <log file location>.txt\" to debug");
             }
             count++;
@@ -225,9 +269,10 @@ public class GameController : MonoBehaviour {
     }
 
     private IEnumerator ProcessWrapper(string sessionPath, string edfPath, string toFolderPath, BinMapper mapper) {
-        print($"session: {sessionPath}");
-        print($"edf: {edfPath}");
-        print($"toFolder: {toFolderPath}");
+        Debug.LogError("ProcessWrapper Running");
+        Debug.LogError($"session: {sessionPath}");
+        Debug.LogError($"edf: {edfPath}");
+        Debug.LogError($"toFolder: {toFolderPath}");
 
         generationComplete = false;
         try {
@@ -235,6 +280,7 @@ public class GameController : MonoBehaviour {
         }
         finally { //so that the batchmode app will quit or move on the the next session
             generationComplete = true;
+            Debug.LogError("Generation Complete");
         }
     }
 }

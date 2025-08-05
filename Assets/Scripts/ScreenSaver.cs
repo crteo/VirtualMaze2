@@ -230,28 +230,34 @@ public class ScreenSaver : BasicGUIController {
         Physics.SyncTransforms();
 
         if (isMatFile(edfPath)) {
-            try {
+            try
+            {
                 eyeReader = new EyeMatReader(edfPath);
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 Debug.LogException(e);
                 Console.WriteError("Unable to open eye data mat file.");
+                Debug.LogError("Unable to open eye data mat file");
             }
         }
         else {
-            try {
+            try
+            {
                 int errorCode;
                 eyeReader = new EDFReader(edfPath, out errorCode);
-                
+
             }
-            catch (Exception e) {
-            Debug.LogException(e);
-            Console.WriteError("Unable to open eye data EDF file.");
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                Console.WriteError("Unable to open eye data EDF file.");
+                Debug.LogError("Unable to open eye data EDF file.");
             }
         }
 
         ISessionDataReader sessionReader = CreateSessionReader(sessionPath);
-        Debug.Log("sessionReader Object Created");
+        Debug.Log($"{sessionPath}:sessionReader Object Created");
 
         if (eyeReader == null || sessionReader == null) {
             yield break;
