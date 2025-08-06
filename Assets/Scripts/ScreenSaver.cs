@@ -180,7 +180,7 @@ public class ScreenSaver : BasicGUIController {
             return;
         }
 
-        bool success = IsFileWithExtension(filePath, ".mat");
+        bool success = IsFileWithExtension(filePath, ".txt");
         int numFrames = 0;
 
         if (success) {
@@ -274,7 +274,7 @@ public class ScreenSaver : BasicGUIController {
         
         yield return PrepareScene("Double Tee");
         Debug.Log("PrepareScene");
-        string filename = $"{Path.GetFileNameWithoutExtension(sessionPath)}_{Path.GetFileNameWithoutExtension(edfPath)}.csv";
+        string filename = $"{Path.GetFileNameWithoutExtension(sessionPath)}_{Path.GetFileNameWithoutExtension(edfPath)}_Aug2025.csv";
 
         DateTime start = DateTime.Now;
         Debug.LogError($"s: {start}");
