@@ -22,7 +22,7 @@ public class GameController : MonoBehaviour {
 
     private string SessionPattern = "[Ss]ession[0-9]{2}";
     private string DayPattern = "[0-9]{8}";
-
+    private string RawPattern = "Rawdata_T[0-9]-[0-9]{3}";
     private string eyelinkMatFile = $"{Path.DirectorySeparatorChar}eyelink.mat";
     
     // Modified to support both .mat and .txt session files
@@ -303,7 +303,7 @@ public class GameController : MonoBehaviour {
     }
 
     private bool IsSessionDir(DirectoryInfo dirInfo) {
-        return Regex.IsMatch(dirInfo.Name, SessionPattern);
+        return Regex.IsMatch(dirInfo.Name, SessionPattern) || Regex.IsMatch(dirInfo.Name, RawPattern);
     }
 
     private IEnumerator ProcessWrapper(string sessionPath, string edfPath, string toFolderPath, BinMapper mapper) {
