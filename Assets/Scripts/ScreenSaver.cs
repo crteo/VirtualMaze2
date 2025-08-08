@@ -274,8 +274,8 @@ public class ScreenSaver : BasicGUIController {
         
         yield return PrepareScene("Double Tee");
         Debug.Log("PrepareScene");
-        string filename = $"{Path.GetFileNameWithoutExtension(sessionPath)}_{Path.GetFileNameWithoutExtension(edfPath)}_Aug2025.csv";
-
+        // string filename = $"{Path.GetFileNameWithoutExtension(sessionPath)}_{Path.GetFileNameWithoutExtension(edfPath)}_Aug2025.csv";
+        string filename = "unityfile_eyelink_new.csv";
         DateTime start = DateTime.Now;
         Debug.LogError($"s: {start}");
 
