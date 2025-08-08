@@ -219,8 +219,8 @@ public class ScreenSaver : BasicGUIController {
 
     public IEnumerator ProcessSessionDataTask(string sessionPath, string edfPath, string toFolderPath, BinMapper mapper) {
         /* Setup */
-        H5.close();
-        H5.open();
+        //H5.close();
+        //H5.open();
         fadeController.gameObject.SetActive(false);
         CueBinCollider.SetActive(true);
         HintBinCollider.SetActive(true);

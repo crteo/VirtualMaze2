@@ -29,7 +29,7 @@ public class GameController : MonoBehaviour {
     private string unityfileMatFile = $"{Path.DirectorySeparatorChar}unityfile.mat";
   
     
-    private string resultFile = $"{Path.DirectorySeparatorChar}unityfile_eyelink.csv";
+    private string resultFile = $"{Path.DirectorySeparatorChar}unityfile_eyelink_new.csv";
 
     private static GameController _instance;
     public static GameController instance {
@@ -229,23 +229,24 @@ public class GameController : MonoBehaviour {
     /// <param name="sessionDir">Directory path containing session files</param>
     /// <returns>Full path to the session file, or null if none found</returns>
     private string GetSessionFilePath(string sessionDir) {
-    // Look for any session*.txt file
-    string[] txtFiles = Directory.GetFiles(sessionDir, "session*.txt");
-    
-    if (txtFiles.Length > 0) {
-        Debug.LogError($"Found .txt session file: {txtFiles[0]}");
-        return txtFiles[0];
+        // Look for any session*.txt file
+        // Assume that session*.txt is stored in RawData*.txt, and sessions.list provided to VirtualMaze2 contains the path to session*.txt files
+        string[] txtFiles = Directory.GetFiles(sessionDir, "session*.txt");
+        
+        if (txtFiles.Length > 0) {
+            Debug.LogError($"Found .txt session file: {txtFiles[0]}");
+            return txtFiles[0];
+        }
+        string parentDir = Path.GetDirectoryName(sessionDir); // need to navigate out by one level
+        string matPath = parentDir + unityfileMatFile;
+        if (File.Exists(matPath)) {
+            Debug.LogError($"Found .mat session file: {matPath}");
+            return matPath;
+        }
+        
+        Debug.LogError($"No session file found in {sessionDir}");
+        return null;
     }
-    
-    string matPath = sessionDir + unityfileMatFile;
-    if (File.Exists(matPath)) {
-        Debug.LogError($"Found .mat session file: {matPath}");
-        return matPath;
-    }
-    
-    Debug.LogError($"No session file found in {sessionDir}");
-    return null;
-}
 
     private async void ProcessSession(Queue<string> sessions, BatchModeLogger logger, BinMapper mapper) {
         string path;
