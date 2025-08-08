@@ -22,7 +22,7 @@ public class GameController : MonoBehaviour {
 
     private string SessionPattern = "[Ss]ession[0-9]{2}";
     private string DayPattern = "[0-9]{8}";
-    private string RawPattern = "Rawdata_T[0-9]-[0-9]{3}";
+    private string RawPattern = "RawData.*";
     private string eyelinkMatFile = $"{Path.DirectorySeparatorChar}eyelink.mat";
     
     // Modified to support both .mat and .txt session files
@@ -265,8 +265,8 @@ public class GameController : MonoBehaviour {
                 count++;
                 continue;
             }
-            
-            string eyelinkFilePath = path + eyelinkMatFile;
+            string parentDir = Path.GetDirectoryName(path);
+            string eyelinkFilePath = parentDir + eyelinkMatFile;
             
             logger.Print($"Path: {path}");
             logger.Print($"Session file: {sessionFilePath}");
